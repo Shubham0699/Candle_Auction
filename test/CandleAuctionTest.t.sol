@@ -29,7 +29,13 @@ contract CandleAuctionTest is Test {
         vrfMock.fundSubscription(subId, 10 ether);
 
         vm.prank(owner);
-        auction = new CandleAuction(address(vrfMock), subId, keyHash, callbackGasLimit, requestConfirmations);
+        auction = new CandleAuction(
+            address(vrfMock),
+            subId,
+            keyHash,
+            callbackGasLimit,
+            requestConfirmations
+        );
 
         vrfMock.addConsumer(subId, address(auction));
 
@@ -38,40 +44,41 @@ contract CandleAuctionTest is Test {
     }
 
     function testFullAuctionFlow() public {
+        // 1) Kick off auction → Commit phase
         vm.warp(100);
-
         vm.prank(owner);
         auction.startAuction(1000, 1000);
 
+        // 2) Commit two bids
         bytes32 salt1 = bytes32("salt1___________________________");
         bytes32 salt2 = bytes32("salt2___________________________");
-
         bytes32 hash1 = keccak256(abi.encode(2 ether, salt1));
         bytes32 hash2 = keccak256(abi.encode(1 ether, salt2));
 
         vm.prank(bidder1);
         auction.commitBid{value: 2 ether}(hash1);
-
         vm.prank(bidder2);
         auction.commitBid{value: 1 ether}(hash2);
 
         assertEq(auction.getCommitment(bidder1), hash1);
         assertEq(auction.getCommitment(bidder2), hash2);
 
+        // 3) Advance to Reveal phase
         vm.warp(auction.commitDeadline() + 1);
+        vm.prank(owner);
+        auction.nextPhase();
 
+        // 4) Request & fulfill randomness
         vm.prank(owner);
         auction.requestRandomEndBlock();
         uint256 requestId = auction.getLastRequestId();
-
         vrfMock.fulfillRandomWords(requestId, address(auction));
-
         uint256 randomEnd = auction.randomEndBlock();
         assertGt(randomEnd, auction.commitDeadline());
 
+        // 5) Reveal bids
         vm.prank(bidder1);
         auction.revealBid(2 ether, salt1);
-
         vm.prank(bidder2);
         auction.revealBid(1 ether, salt2);
 
@@ -80,34 +87,34 @@ contract CandleAuctionTest is Test {
         assertEq(auction.getHighestBidder(), bidder1);
         assertEq(auction.getHighestBid(), 2 ether);
 
+        // 6) Advance to Ended phase
         vm.warp(auction.revealDeadline() + 1);
+        vm.prank(owner);
+        auction.nextPhase();
 
+        // 7) Settle and verify winner
         vm.prank(bidder1);
         auction.settleAuction();
-
         assertEq(auction.getWinner(), bidder1);
 
+        // 8) Withdraw refund for loser
         uint256 before = bidder2.balance;
         vm.prank(bidder2);
         auction.withdraw();
         uint256 afterBalance = bidder2.balance;
-
         assertGt(afterBalance, before);
     }
 
     /// @notice Reverts when the same bidder tries to commit twice
     function testDoubleCommitReverts() public {
-        // 1. Move time into Commit phase
         vm.warp(100);
         vm.prank(owner);
         auction.startAuction(1000, 1000);
 
-        // 2. First commit succeeds
         bytes32 hash = keccak256(abi.encode(1 ether, bytes32("salt")));
         vm.prank(bidder1);
         auction.commitBid{value: 1 ether}(hash);
 
-        // 3. Second commit by same address should fail
         vm.prank(bidder1);
         vm.expectRevert("Already committed");
         auction.commitBid{value: 1 ether}(hash);
