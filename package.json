@@ -1,0 +1,34 @@
+{
+  "name": "candle-auction",
+  "version": "1.0.0",
+  "description": "A decentralized auction platform implementing a commit-reveal mechanism with a randomly determined end time using Chainlink VRF. Built with Foundry for smart contracts and React + Vite + Ethers.js for the optional frontend.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "commit": "node scripts/commitBid.js",
+    "reveal": "node scripts/revealBid.js"
+
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shubham0699/Candle_Auction.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Shubham0699/Candle_Auction/issues"
+  },
+  "homepage": "https://github.com/Shubham0699/Candle_Auction#readme",
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "ethers": "^6.15.0"
+  }
+ 
+}

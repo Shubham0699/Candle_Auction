@@ -1,0 +1,19 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "chainlink-brownie-contracts/=lib/chainlink-brownie-contracts/",
+]
+
+[profile.local]
+rpc_url = "${RPC_URL}"
+private_key = "${PRIVATE_KEY}"
+
+[profile.sepolia]
+rpc_url = "${SEPOLIA_RPC_URL}"
+private_key = "${PRIVATE_KEY}"
+chain_id = 11155111
+gas_price = "10000000000"
+gas_limit = 3000000
