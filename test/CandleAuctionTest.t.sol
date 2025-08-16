@@ -29,13 +29,7 @@ contract CandleAuctionTest is Test {
         vrfMock.fundSubscription(subId, 10 ether);
 
         vm.prank(owner);
-        auction = new CandleAuction(
-            address(vrfMock),
-            subId,
-            keyHash,
-            callbackGasLimit,
-            requestConfirmations
-        );
+        auction = new CandleAuction(address(vrfMock), subId, keyHash, callbackGasLimit, requestConfirmations);
 
         vrfMock.addConsumer(subId, address(auction));
 
